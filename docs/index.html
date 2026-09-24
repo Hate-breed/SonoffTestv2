@@ -96,6 +96,16 @@
   }
   .kid .avatar { width: min(26vw, 104px); aspect-ratio: 1; }
   .kid .avatar svg { width: 100%; height: 100%; display: block; }
+  .avatar img { width: 100%; height: 100%; display: block; border-radius: 50%; object-fit: cover; }
+  .kid[data-kid="sofia"] .avatar img { box-shadow: 0 0 0 4px var(--sofia-soft); }
+  .kid[data-kid="daniil"] .avatar img { box-shadow: 0 0 0 4px var(--daniil-soft); }
+  .edit {
+    position: absolute; top: 8px; left: 8px;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 0; background: var(--tile);
+    display: grid; place-items: center;
+  }
+  .edit svg { width: 18px; height: 18px; }
   .kid .name { font-family: var(--display); font-weight: 700; font-size: 1.2rem; }
   .kid[data-kid="sofia"] .name { color: var(--sofia); }
   .kid[data-kid="daniil"] .name { color: var(--daniil); }
@@ -254,7 +264,7 @@
   }
   .timer .who { display: flex; align-items: center; gap: 12px; font-family: var(--display); font-weight: 700; font-size: 1.4rem; }
   .timer .who .avatar { width: 64px; height: 64px; }
-  .timer .who .avatar svg { width: 100%; height: 100%; display: block; }
+  .timer .who .avatar svg, .timer .who .avatar img { width: 100%; height: 100%; display: block; }
   .ring { position: relative; width: min(72vw, 260px, 38svh); aspect-ratio: 1; max-width: 100%; }
   .ring svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
   .ring .clock {
@@ -268,6 +278,51 @@
   .zones span.now { background: var(--kid, var(--mint)); }
   .zone-text { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 2.8em; text-wrap: balance; max-width: 22ch; }
   .timer .actions { width: min(100%, 340px); }
+
+  /* Редактор аватарки */
+  .editor {
+    position: fixed; inset: 0; z-index: 20;
+    background: rgba(30, 43, 69, .5);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .sheet {
+    width: min(100%, 440px); max-height: 100%; overflow-y: auto;
+    background: var(--card);
+    border-radius: 28px 28px 0 0;
+    padding-inline: 16px;
+    padding-block: 20px max(20px, env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; align-items: stretch; gap: 14px;
+  }
+  .sheet h2 { font-family: var(--display); font-size: 1.3rem; margin: 0; text-align: center; }
+  .crop {
+    position: relative; align-self: center;
+    width: min(66vw, 240px, 32svh); aspect-ratio: 1; max-width: 100%;
+    border-radius: 50%; overflow: hidden;
+    background: var(--tile);
+    box-shadow: 0 0 0 5px var(--kid-soft, var(--grout));
+    touch-action: none;
+  }
+  .crop canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+  .crop-empty {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    text-align: center; padding: 20px; color: var(--ink-soft); font-weight: 700;
+    pointer-events: none;
+  }
+  .busy-dot { position: absolute; right: 12%; bottom: 12%; width: 12px; height: 12px; border-radius: 50%; background: var(--mint); animation: blink .6s infinite alternate; }
+  @keyframes blink { to { opacity: .2; } }
+  .file-btn { position: relative; text-align: center; display: block; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--tile); padding: 5px; border-radius: 999px; }
+  .seg label { position: relative; text-align: center; padding: 10px; border-radius: 999px; font-weight: 800; cursor: pointer; }
+  .seg input { position: absolute; opacity: 0; }
+  .seg input:checked + span { color: #fff; }
+  .seg label:has(input:checked) { background: var(--ink); color: #fff; }
+  .seg label:has(input:focus-visible) { outline: 3px solid var(--mint); outline-offset: 2px; }
+  .slider { display: grid; grid-template-columns: 7.5em 1fr; align-items: center; gap: 10px; font-weight: 700; }
+  .slider input { width: 100%; accent-color: var(--mint); }
+  .hint { margin: 0; font-size: .9rem; color: var(--ink-soft); line-height: 1.4; }
+  .sheet .row2 { display: flex; gap: 10px; }
+  .sheet .row2 > * { flex: 1; }
 
   @media (prefers-reduced-motion: reduce) {
     .kid.winner { animation: none; }
@@ -285,11 +340,13 @@
   <section class="kids">
     <div class="kid" data-kid="sofia" id="kid-sofia">
       <span class="badge">Первая!</span>
+      <button class="edit" type="button" data-edit="sofia" aria-label="Поменять аватарку: София"><svg viewBox="0 0 24 24" fill="none" stroke="#1E2B45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
       <div class="avatar"></div>
       <div class="name">София</div>
     </div>
     <div class="kid" data-kid="daniil" id="kid-daniil">
       <span class="badge">Первый!</span>
+      <button class="edit" type="button" data-edit="daniil" aria-label="Поменять аватарку: Даниил"><svg viewBox="0 0 24 24" fill="none" stroke="#1E2B45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
       <div class="avatar"></div>
       <div class="name">Даниил</div>
     </div>
@@ -377,6 +434,33 @@
   </div>
 </section>
 
+<section class="editor" id="editor" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="e-title">
+    <h2 id="e-title">Аватарка</h2>
+    <div class="crop" id="e-crop">
+      <canvas id="e-canvas" width="320" height="320"></canvas>
+      <div class="crop-empty" id="e-empty">Сфотографируй или выбери фото</div>
+      <div class="busy-dot" id="e-busy" hidden></div>
+    </div>
+    <label class="btn btn-timer file-btn">
+      <span id="e-file-label">Сфотографировать или выбрать фото</span>
+      <input class="visually-hidden" type="file" id="e-file" accept="image/*">
+    </label>
+    <div class="seg" role="radiogroup" aria-label="Стиль">
+      <label><input type="radio" name="e-style" id="e-style-cartoon" value="cartoon" checked><span>Мультик</span></label>
+      <label><input type="radio" name="e-style" id="e-style-photo" value="photo"><span>Как есть</span></label>
+    </div>
+    <label class="slider">Приблизить <input type="range" id="e-zoom" min="1" max="3" step="0.01" value="1"></label>
+    <label class="slider" id="e-bulge-row">Шарж <input type="range" id="e-bulge" min="0" max="1" step="0.05" value="0.5"></label>
+    <p class="hint">Двигай фото пальцем, чтобы лицо было в центре круга. «Шарж» увеличивает лицо, как у мультяшки. Фото обрабатывается прямо в телефоне и никуда не отправляется.</p>
+    <button class="btn btn-main" id="e-save" type="button" disabled>Сохранить</button>
+    <div class="row2">
+      <button class="btn btn-ghost" id="e-reset" type="button">Рисованная</button>
+      <button class="btn btn-ghost" id="e-cancel" type="button">Отмена</button>
+    </div>
+  </div>
+</section>
+
 <script>
 (() => {
   const $ = (s) => document.querySelector(s);
@@ -416,7 +500,6 @@
     daniil: { name: "Даниил", gen: "Даниила", first: "Первым", color: "#2A86E0", initial: "Д" }
   };
   const other = (id) => (id === "sofia" ? "daniil" : "sofia");
-  for (const id in KIDS) $(`#kid-${id} .avatar`).innerHTML = AVATARS[id];
 
   // Щетинки
   const bristles = $("#bristles");
@@ -433,7 +516,15 @@
     const saved = JSON.parse(localStorage.getItem(KEY) || "null");
     if (saved) state = Object.assign(state, saved);
   } catch (e) {}
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+  const save = () => {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); return true; } catch (e) { return false; }
+  };
+
+  // Своя аватарка (из фото) или рисованная по умолчанию
+  state.avatars = state.avatars || {};
+  const avatarHTML = (id) =>
+    state.avatars[id] ? `<img src="${state.avatars[id]}" alt="${KIDS[id].name}">` : AVATARS[id];
+  const renderAvatars = () => { for (const id in KIDS) $(`#kid-${id} .avatar`).innerHTML = avatarHTML(id); };
 
   // ---------- Звук ----------
   let ac = null;
@@ -657,7 +748,7 @@
 
   function startTimer(kid) {
     t = { kid, elapsed: 0, last: performance.now(), running: true, zone: -1, done: false };
-    $("#t-avatar").innerHTML = AVATARS[kid];
+    $("#t-avatar").innerHTML = avatarHTML(kid);
     $("#t-name").textContent = KIDS[kid].name;
     $("#t-name").style.color = KIDS[kid].color;
     timerEl.style.setProperty("--kid", KIDS[kid].color);
@@ -707,7 +798,266 @@
   closeBtn.addEventListener("click", () => { t.running = false; timerEl.hidden = true; unlockScreen(); });
   timerOpen.addEventListener("click", () => { audio(); if (lastWinner) startTimer(lastWinner); });
 
+  // ---------- Аватарка из фото ----------
+  // Всё считается на телефоне: кадрирование → «шарж» (линза, увеличивающая центр)
+  // → сглаживание с сохранением контуров → плоские цвета → тёмные контурные линии.
+  const S = 320;
+  const editor = $("#editor"), eCanvas = $("#e-canvas"), eCtx = eCanvas.getContext("2d");
+  const eEmpty = $("#e-empty"), eBusy = $("#e-busy"), eSave = $("#e-save"), eReset = $("#e-reset");
+  const eZoom = $("#e-zoom"), eBulge = $("#e-bulge"), eBulgeRow = $("#e-bulge-row");
+  const work = document.createElement("canvas");
+  work.width = work.height = S;
+  const wCtx = work.getContext("2d", { willReadFrequently: true });
+  const SOFT = { sofia: "#FFE1E8", daniil: "#DCEEFF" };
+  let ed = { kid: null, img: null, ox: 0, oy: 0, style: "cartoon", finalTimer: null };
+
+  function openEditor(kid) {
+    ed = { kid, img: null, ox: 0, oy: 0, style: ed.style || "cartoon", finalTimer: null };
+    $("#e-title").textContent = `Аватарка: ${KIDS[kid].name}`;
+    editor.style.setProperty("--kid-soft", SOFT[kid]);
+    eZoom.value = 1;
+    eEmpty.hidden = false;
+    eSave.disabled = true;
+    eReset.hidden = !state.avatars[kid];
+    eCtx.fillStyle = SOFT[kid];
+    eCtx.fillRect(0, 0, S, S);
+    $("#e-file").value = "";
+    editor.hidden = false;
+  }
+  const closeEditor = () => { editor.hidden = true; ed.img = null; };
+
+  document.querySelectorAll("[data-edit]").forEach((btn) =>
+    btn.addEventListener("click", () => { if (!busy) openEditor(btn.dataset.edit); }));
+  $("#e-cancel").addEventListener("click", closeEditor);
+  editor.addEventListener("click", (e) => { if (e.target === editor) closeEditor(); });
+
+  $("#e-file").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      // Уменьшаем большие фото сразу — так всё двигается плавно
+      const k = Math.min(1, 1400 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.naturalWidth * k);
+      c.height = Math.round(img.naturalHeight * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      ed.img = c; ed.ox = 0; ed.oy = 0;
+      eZoom.value = 1.3;
+      eEmpty.hidden = true;
+      eSave.disabled = false;
+      draw(true);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      eEmpty.hidden = false;
+      eEmpty.textContent = "Не получилось открыть это фото. Попробуй другое.";
+    };
+    img.src = url;
+  });
+
+  document.querySelectorAll('input[name="e-style"]').forEach((r) =>
+    r.addEventListener("change", () => {
+      ed.style = r.value;
+      eBulgeRow.hidden = ed.style !== "cartoon";
+      draw(true);
+    }));
+  eZoom.addEventListener("input", () => draw(false));
+  eBulge.addEventListener("input", () => draw(false));
+
+  // Перетаскивание фото пальцем
+  let drag = null;
+  eCanvas.addEventListener("pointerdown", (e) => {
+    if (!ed.img) return;
+    eCanvas.setPointerCapture(e.pointerId);
+    drag = { x: e.clientX, y: e.clientY };
+  });
+  eCanvas.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const k = S / eCanvas.getBoundingClientRect().width;
+    ed.ox += (e.clientX - drag.x) * k;
+    ed.oy += (e.clientY - drag.y) * k;
+    drag = { x: e.clientX, y: e.clientY };
+    draw(false);
+  });
+  const endDrag = () => { if (drag) { drag = null; draw(true); } };
+  eCanvas.addEventListener("pointerup", endDrag);
+  eCanvas.addEventListener("pointercancel", endDrag);
+
+  // Быстрый предпросмотр во время движения, полная обработка — после паузы
+  let rafPending = false;
+  function draw(final) {
+    if (!ed.img) return;
+    clearTimeout(ed.finalTimer);
+    if (!rafPending) {
+      rafPending = true;
+      requestAnimationFrame(() => { rafPending = false; compose(false); });
+    }
+    ed.finalTimer = setTimeout(() => {
+      eBusy.hidden = false;
+      setTimeout(() => { compose(true); eBusy.hidden = true; }, 20);
+    }, final ? 0 : 250);
+  }
+
+  function compose(final) {
+    const img = ed.img, zoom = +eZoom.value;
+    const scale = (S / Math.min(img.width, img.height)) * zoom;
+    const dw = img.width * scale, dh = img.height * scale;
+    const mx = (dw - S) / 2, my = (dh - S) / 2;
+    ed.ox = Math.max(-mx, Math.min(mx, ed.ox));
+    ed.oy = Math.max(-my, Math.min(my, ed.oy));
+    wCtx.fillStyle = SOFT[ed.kid];
+    wCtx.fillRect(0, 0, S, S);
+    wCtx.drawImage(img, (S - dw) / 2 + ed.ox, (S - dh) / 2 + ed.oy, dw, dh);
+    if (ed.style === "cartoon") {
+      const data = wCtx.getImageData(0, 0, S, S);
+      let px = bulge(data.data, +eBulge.value);
+      if (final) px = cartoon(px);
+      data.data.set(px);
+      wCtx.putImageData(data, 0, 0);
+    }
+    eCtx.drawImage(work, 0, 0);
+  }
+
+  // Линза: центр (лицо) увеличивается, края сжимаются — эффект шаржа
+  function bulge(src, amount) {
+    if (amount <= 0) return src;
+    const out = new Uint8ClampedArray(src.length), c = S / 2, p = 1 + amount * 0.9;
+    for (let y = 0; y < S; y++) {
+      for (let x = 0; x < S; x++) {
+        const dx = (x - c) / c, dy = (y - c) / c, r = Math.hypot(dx, dy);
+        let sx = x, sy = y;
+        if (r > 0 && r < 1) {
+          const f = Math.pow(r, p) / r;
+          sx = c + dx * f * c; sy = c + dy * f * c;
+        }
+        // билинейная интерполяция
+        const x0 = Math.min(S - 2, Math.max(0, Math.floor(sx))), y0 = Math.min(S - 2, Math.max(0, Math.floor(sy)));
+        const fx = sx - x0, fy = sy - y0, o = (y * S + x) * 4;
+        const i00 = (y0 * S + x0) * 4, i10 = i00 + 4, i01 = i00 + S * 4, i11 = i01 + 4;
+        for (let ch = 0; ch < 3; ch++) {
+          out[o + ch] = (src[i00 + ch] * (1 - fx) + src[i10 + ch] * fx) * (1 - fy) +
+                        (src[i01 + ch] * (1 - fx) + src[i11 + ch] * fx) * fy;
+        }
+        out[o + 3] = 255;
+      }
+    }
+    return out;
+  }
+
+  function cartoon(src) {
+    const N = S * S;
+    // 1. Сглаживание, которое не размывает контуры (билатеральный фильтр, 2 прохода)
+    let img = src;
+    const R = 3, spatial = [], rangeLut = new Float32Array(766);
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++)
+      spatial.push([dx, dy, Math.exp(-(dx * dx + dy * dy) / (2 * 2.5 * 2.5))]);
+    for (let d = 0; d < 766; d++) rangeLut[d] = Math.exp(-(d * d) / (2 * 45 * 45));
+    for (let pass = 0; pass < 2; pass++) {
+      const out = new Uint8ClampedArray(img.length);
+      for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+        const o = (y * S + x) * 4, r0 = img[o], g0 = img[o + 1], b0 = img[o + 2];
+        let sr = 0, sg = 0, sb = 0, sw = 0;
+        for (let k = 0; k < spatial.length; k++) {
+          const xx = x + spatial[k][0], yy = y + spatial[k][1];
+          if (xx < 0 || yy < 0 || xx >= S || yy >= S) continue;
+          const i = (yy * S + xx) * 4;
+          const w = spatial[k][2] * rangeLut[Math.abs(img[i] - r0) + Math.abs(img[i + 1] - g0) + Math.abs(img[i + 2] - b0)];
+          sr += img[i] * w; sg += img[i + 1] * w; sb += img[i + 2] * w; sw += w;
+        }
+        out[o] = sr / sw; out[o + 1] = sg / sw; out[o + 2] = sb / sw; out[o + 3] = 255;
+      }
+      img = out;
+    }
+    // 2. Плоские мультяшные цвета: k-means на 8 цветов
+    const K = 8, centers = [];
+    const lum = (i) => img[i] * 0.3 + img[i + 1] * 0.59 + img[i + 2] * 0.11;
+    const sample = [];
+    for (let i = 0; i < N; i += 7) sample.push(i * 4);
+    sample.sort((a, b) => lum(a) - lum(b));
+    for (let k = 0; k < K; k++) {
+      const i = sample[Math.floor(((k + 0.5) / K) * sample.length)];
+      centers.push([img[i], img[i + 1], img[i + 2]]);
+    }
+    const nearest = (r, g, b) => {
+      let best = 0, bd = Infinity;
+      for (let k = 0; k < K; k++) {
+        const c = centers[k], d = (c[0] - r) ** 2 + (c[1] - g) ** 2 + (c[2] - b) ** 2;
+        if (d < bd) { bd = d; best = k; }
+      }
+      return best;
+    };
+    for (let it = 0; it < 8; it++) {
+      const acc = centers.map(() => [0, 0, 0, 0]);
+      for (const i of sample) {
+        const a = acc[nearest(img[i], img[i + 1], img[i + 2])];
+        a[0] += img[i]; a[1] += img[i + 1]; a[2] += img[i + 2]; a[3]++;
+      }
+      acc.forEach((a, k) => { if (a[3]) centers[k] = [a[0] / a[3], a[1] / a[3], a[2] / a[3]]; });
+    }
+    // чуть сочнее цвета, как в мультике
+    centers.forEach((c) => {
+      const m = (c[0] + c[1] + c[2]) / 3;
+      for (let ch = 0; ch < 3; ch++) c[ch] = m + (c[ch] - m) * 1.25 + 6;
+    });
+    const out = new Uint8ClampedArray(img.length);
+    for (let p = 0; p < N; p++) {
+      const o = p * 4, c = centers[nearest(img[o], img[o + 1], img[o + 2])];
+      out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255;
+    }
+    // 3. Контурные линии: оператор Собеля по яркости сглаженного фото
+    const gray = new Float32Array(N);
+    for (let p = 0; p < N; p++) gray[p] = lum(p * 4);
+    const mag = new Float32Array(N), hist = new Uint32Array(256);
+    for (let y = 1; y < S - 1; y++) for (let x = 1; x < S - 1; x++) {
+      const p = y * S + x;
+      const gx = gray[p - S + 1] + 2 * gray[p + 1] + gray[p + S + 1] - gray[p - S - 1] - 2 * gray[p - 1] - gray[p + S - 1];
+      const gy = gray[p + S - 1] + 2 * gray[p + S] + gray[p + S + 1] - gray[p - S - 1] - 2 * gray[p - S] - gray[p - S + 1];
+      const m = Math.min(255, Math.hypot(gx, gy) / 4);
+      mag[p] = m; hist[m | 0]++;
+    }
+    // порог — самые резкие 9% перепадов, чтобы линий было не слишком много
+    let thr = 255;
+    for (let v = 255, cnt = 0; v > 0; v--) { cnt += hist[v]; if (cnt > N * 0.09) { thr = Math.max(v, 12); break; } }
+    for (let p = 0; p < N; p++) {
+      if (mag[p] <= thr) continue;
+      const a = Math.min(0.9, 0.35 + (mag[p] - thr) / thr), o = p * 4;
+      out[o] = out[o] * (1 - a) + 43 * a;
+      out[o + 1] = out[o + 1] * (1 - a) + 36 * a;
+      out[o + 2] = out[o + 2] * (1 - a) + 64 * a;
+    }
+    return out;
+  }
+
+  eSave.addEventListener("click", () => {
+    if (!ed.img) return;
+    clearTimeout(ed.finalTimer);
+    compose(true);
+    const out = document.createElement("canvas");
+    out.width = out.height = 256;
+    out.getContext("2d").drawImage(work, 0, 0, 256, 256);
+    const prev = state.avatars[ed.kid];
+    state.avatars[ed.kid] = out.toDataURL("image/jpeg", 0.85);
+    if (!save()) {
+      state.avatars[ed.kid] = prev;
+      $("#e-empty").hidden = false;
+      $("#e-empty").textContent = "Не хватило памяти, чтобы сохранить. Попробуй ещё раз.";
+      return;
+    }
+    renderAvatars();
+    closeEditor();
+  });
+  eReset.addEventListener("click", () => {
+    delete state.avatars[ed.kid];
+    save();
+    renderAvatars();
+    closeEditor();
+  });
+
   // ---------- Старт ----------
+  renderAvatars();
   setAngle(0);
   setPaste(1);
   renderSound();
