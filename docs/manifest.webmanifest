@@ -1,0 +1,13 @@
+{
+  "name": "Кто первый чистит зубы",
+  "short_name": "Кто первый?",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#E7F5F2",
+  "theme_color": "#E7F5F2",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
