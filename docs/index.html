@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кто первый чистит зубы</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Кто первый?">
+<meta name="theme-color" content="#E7F5F2">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&family=Nunito:wght@400;700;800&display=swap">
+<style>
+  :root {
+    --tile: #E7F5F2;
+    --grout: #D2EBE5;
+    --ink: #1E2B45;
+    --ink-soft: #56627A;
+    --card: #FFFFFF;
+    --mint: #17B091;
+    --mint-dark: #0E8A71;
+    --sofia: #E9476F;
+    --sofia-soft: #FFE1E8;
+    --daniil: #2A86E0;
+    --daniil-soft: #DCEEFF;
+    --display: "Comfortaa", "Arial Rounded MT Bold", system-ui, sans-serif;
+    --body: "Nunito", -apple-system, system-ui, sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background-color: var(--tile);
+    background-image:
+      linear-gradient(var(--grout) 2px, transparent 2px),
+      linear-gradient(90deg, var(--grout) 2px, transparent 2px);
+    background-size: 48px 48px;
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  button { font-family: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible + .switch { outline: 3px solid var(--mint); outline-offset: 3px; }
+
+  .app {
+    max-width: 440px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: max(14px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  h1 {
+    font-family: var(--display);
+    font-size: 1.45rem;
+    line-height: 1.15;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .sound {
+    flex: none;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--card);
+    box-shadow: 0 3px 0 rgba(30, 43, 69, .1);
+    display: grid; place-items: center;
+  }
+  .sound svg { width: 22px; height: 22px; }
+
+  /* Карточки детей */
+  .kids { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .kid {
+    position: relative;
+    background: var(--card);
+    border-radius: 24px;
+    padding: 12px 8px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    border: 3px solid transparent;
+    box-shadow: 0 4px 0 rgba(30, 43, 69, .08);
+    transition: transform .18s ease, border-color .18s, opacity .3s, background-color .3s;
+  }
+  .kid .avatar { width: min(26vw, 104px); aspect-ratio: 1; }
+  .kid .avatar svg { width: 100%; height: 100%; display: block; }
+  .kid .name { font-family: var(--display); font-weight: 700; font-size: 1.2rem; }
+  .kid[data-kid="sofia"] .name { color: var(--sofia); }
+  .kid[data-kid="daniil"] .name { color: var(--daniil); }
+  .kid.lit { transform: scale(1.04); }
+  .kid.lit[data-kid="sofia"], .kid.winner[data-kid="sofia"] { border-color: var(--sofia); }
+  .kid.lit[data-kid="daniil"], .kid.winner[data-kid="daniil"] { border-color: var(--daniil); }
+  .kid.winner { transform: scale(1.06); animation: hop .6s ease 2; }
+  .kid.winner[data-kid="sofia"] { background: var(--sofia-soft); }
+  .kid.winner[data-kid="daniil"] { background: var(--daniil-soft); }
+  .kid.dim { opacity: .5; transform: scale(.94); }
+  .badge {
+    position: absolute; top: -12px; right: -6px;
+    font-weight: 800; font-size: .8rem; letter-spacing: .03em;
+    color: #fff; padding: 5px 10px; border-radius: 999px;
+    transform: scale(0) rotate(-12deg);
+    transition: transform .35s cubic-bezier(.3, 1.6, .5, 1);
+  }
+  .kid[data-kid="sofia"] .badge { background: var(--sofia); }
+  .kid[data-kid="daniil"] .badge { background: var(--daniil); }
+  .kid.winner .badge { transform: scale(1) rotate(8deg); }
+  @keyframes hop { 0%,100% { translate: 0 0; } 40% { translate: 0 -10px; } }
+
+  /* Раковина со щёткой */
+  .stage {
+    position: relative;
+    width: min(100%, 340px, 44svh);
+    aspect-ratio: 1;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  .sink {
+    position: absolute; inset: 4%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 45%, #FFFFFF 0 55%, #F0F8F6 75%, #E2F0EC 100%);
+    border: 8px solid #FFFFFF;
+    box-shadow: 0 6px 0 rgba(30, 43, 69, .08), inset 0 4px 14px rgba(30, 43, 69, .08);
+  }
+  .drain {
+    position: absolute; left: 50%; top: 50%;
+    width: 8%; aspect-ratio: 1; translate: -50% -50%;
+    border-radius: 50%;
+    background: repeating-linear-gradient(90deg, #B9C9C6 0 2px, #DCE8E5 2px 5px);
+    border: 2px solid #C7D6D3;
+  }
+  .brush {
+    position: absolute; left: 5%; top: 50%;
+    width: 90%; height: auto;
+    translate: 0 -50%;
+    transform-origin: 50% 50%;
+    filter: drop-shadow(0 5px 3px rgba(30, 43, 69, .18));
+  }
+  .paste path { stroke-dasharray: 100; stroke-dashoffset: 100; }
+  .tube {
+    position: absolute; left: 81.5%; top: 6%;
+    width: 18%;
+    transform-origin: 50% 100%;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .tube svg { width: 100%; height: auto; display: block; transform-origin: 50% 40%; }
+
+  .banner {
+    min-height: 3.4em;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    font-family: var(--display); font-weight: 700;
+    font-size: 1.2rem; line-height: 1.3;
+    text-wrap: balance;
+  }
+  .banner b[data-kid="sofia"] { color: var(--sofia); }
+  .banner b[data-kid="daniil"] { color: var(--daniil); }
+  .banner .pop { animation: popin .45s cubic-bezier(.3, 1.6, .5, 1); display: inline-block; }
+  @keyframes popin { from { transform: scale(.4); opacity: 0; } }
+
+  .actions { display: flex; flex-direction: column; gap: 10px; }
+  .btn {
+    border: 0; border-radius: 999px;
+    padding: 17px 20px;
+    font-weight: 800; font-size: 1.2rem;
+    transition: translate .08s, box-shadow .08s, opacity .2s;
+  }
+  .btn:active:not(:disabled) { translate: 0 4px; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn-main { background: var(--ink); color: #fff; box-shadow: 0 6px 0 #0D1528; }
+  .btn-main:active:not(:disabled) { box-shadow: 0 2px 0 #0D1528; }
+  .btn-timer { background: var(--mint); color: #fff; box-shadow: 0 6px 0 var(--mint-dark); font-size: 1.05rem; }
+  .btn-timer:active:not(:disabled) { box-shadow: 0 2px 0 var(--mint-dark); }
+  .btn-ghost { background: var(--card); color: var(--ink); box-shadow: 0 4px 0 rgba(30, 43, 69, .12); font-size: 1rem; padding: 14px 20px; }
+
+  /* Счёт и история */
+  .stats {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    box-shadow: 0 4px 0 rgba(30, 43, 69, .08);
+  }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .label { font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+  .score { font-weight: 800; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .score .s { color: var(--sofia); }
+  .score .d { color: var(--daniil); }
+  .chips { display: flex; gap: 5px; flex-wrap: wrap; min-height: 26px; }
+  .chip {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: grid; place-items: center;
+    color: #fff; font-weight: 800; font-size: .8rem;
+  }
+  .chip.sofia { background: var(--sofia); }
+  .chip.daniil { background: var(--daniil); }
+  .chips .empty { font-size: .9rem; color: var(--ink-soft); }
+  .fair { display: flex; align-items: center; gap: 10px; font-size: .95rem; cursor: pointer; }
+  .fair input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch {
+    flex: none; width: 46px; height: 28px; border-radius: 999px;
+    background: #C9D6D3; position: relative; transition: background .2s;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 22px; height: 22px; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .2); transition: translate .2s;
+  }
+  .fair input:checked + .switch { background: var(--mint); }
+  .fair input:checked + .switch::after { translate: 18px 0; }
+  .reset { border: 0; background: none; font-size: .85rem; color: var(--ink-soft); text-decoration: underline; padding: 6px 0; }
+
+  /* Пузырьки пены */
+  .bubble {
+    position: fixed; bottom: -60px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, #FFFFFF 0 16%, rgba(255, 255, 255, .55) 32%, rgba(150, 220, 250, .35) 70%, rgba(255, 255, 255, .8) 100%);
+    border: 1.5px solid rgba(255, 255, 255, .95);
+    box-shadow: 0 0 0 1px rgba(42, 134, 224, .12);
+    pointer-events: none;
+    z-index: 5;
+    animation: rise var(--d) cubic-bezier(.3, .1, .6, 1) forwards;
+  }
+  @keyframes rise {
+    0% { transform: translate(0, 0) scale(.6); }
+    85% { opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(1.1); opacity: 0; }
+  }
+
+  /* Таймер */
+  .timer {
+    position: fixed; inset: 0; z-index: 10;
+    background-color: var(--tile);
+    background-image:
+      linear-gradient(var(--grout) 2px, transparent 2px),
+      linear-gradient(90deg, var(--grout) 2px, transparent 2px);
+    background-size: 48px 48px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    padding-inline: 16px;
+    padding-block: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+  }
+  .timer .who { display: flex; align-items: center; gap: 12px; font-family: var(--display); font-weight: 700; font-size: 1.4rem; }
+  .timer .who .avatar { width: 64px; height: 64px; }
+  .timer .who .avatar svg { width: 100%; height: 100%; display: block; }
+  .ring { position: relative; width: min(72vw, 260px, 38svh); aspect-ratio: 1; max-width: 100%; }
+  .ring svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
+  .ring .clock {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-family: var(--display); font-weight: 700; font-size: clamp(2.4rem, 13vw, 3.4rem);
+    font-variant-numeric: tabular-nums;
+  }
+  .zones { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: min(100%, 300px); }
+  .zones span { height: 8px; border-radius: 999px; background: var(--grout); transition: background .3s; }
+  .zones span.done { background: var(--mint); }
+  .zones span.now { background: var(--kid, var(--mint)); }
+  .zone-text { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 2.8em; text-wrap: balance; max-width: 22ch; }
+  .timer .actions { width: min(100%, 340px); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kid.winner { animation: none; }
+    .bubble { display: none; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>Кто первый чистит зубы?</h1>
+    <button class="sound" id="sound" type="button" aria-label="Звук включён"></button>
+  </header>
+
+  <section class="kids">
+    <div class="kid" data-kid="sofia" id="kid-sofia">
+      <span class="badge">Первая!</span>
+      <div class="avatar"></div>
+      <div class="name">София</div>
+    </div>
+    <div class="kid" data-kid="daniil" id="kid-daniil">
+      <span class="badge">Первый!</span>
+      <div class="avatar"></div>
+      <div class="name">Даниил</div>
+    </div>
+  </section>
+
+  <div class="stage" id="stage">
+    <div class="sink"><div class="drain"></div></div>
+    <svg class="brush" id="brush" viewBox="0 0 320 90" aria-hidden="true">
+      <defs>
+        <linearGradient id="handle" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#3FD3B3"/>
+          <stop offset="1" stop-color="#11A084"/>
+        </linearGradient>
+      </defs>
+      <rect x="12" y="37" width="196" height="22" rx="11" fill="url(#handle)"/>
+      <rect x="40" y="43" width="90" height="10" rx="5" fill="#FFFFFF" opacity=".55"/>
+      <circle cx="30" cy="48" r="5" fill="#FFFFFF" opacity=".7"/>
+      <path d="M204 41 L244 44 L244 52 L204 55 Z" fill="url(#handle)"/>
+      <rect x="236" y="38" width="76" height="16" rx="8" fill="url(#handle)"/>
+      <g id="bristles"></g>
+      <g class="paste" id="paste" stroke-linecap="round" fill="none">
+        <path pathLength="100" d="M303 11 q -5 -6 -10 0 t -10 0 t -10 0 t -10 0 t -10 0 t -10 0" stroke="#FFFFFF" stroke-width="12"/>
+        <path pathLength="100" d="M303 11 q -5 -6 -10 0 t -10 0 t -10 0 t -10 0 t -10 0 t -10 0" stroke="#E8394A" stroke-width="3.4" transform="translate(0 -3.2)"/>
+        <path pathLength="100" d="M303 11 q -5 -6 -10 0 t -10 0 t -10 0 t -10 0 t -10 0 t -10 0" stroke="#17B091" stroke-width="3.4" transform="translate(0 3.2)"/>
+      </g>
+    </svg>
+    <div class="tube" id="tube" aria-hidden="true">
+      <svg viewBox="0 0 60 110">
+        <defs>
+          <linearGradient id="tubeBody" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#E4ECF0"/>
+            <stop offset=".45" stop-color="#FFFFFF"/>
+            <stop offset="1" stop-color="#D5E0E6"/>
+          </linearGradient>
+        </defs>
+        <rect x="6" y="2" width="48" height="10" rx="2" fill="#C9D6DC"/>
+        <path d="M6 10 H54 L50 76 Q30 86 10 76 Z" fill="url(#tubeBody)" stroke="#B8C7CE" stroke-width="1.5"/>
+        <path d="M8.5 34 H51.5 L50.6 48 H9.4 Z" fill="#E8394A"/>
+        <path d="M9.6 52 H50.4 L49.8 60 H10.2 Z" fill="#17B091"/>
+        <text x="30" y="44.5" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">ПАСТА</text>
+        <path d="M18 78 H42 L38 92 H22 Z" fill="#FFFFFF" stroke="#B8C7CE" stroke-width="1.5"/>
+        <rect x="24" y="92" width="12" height="10" rx="2" fill="#F3F7F9" stroke="#B8C7CE" stroke-width="1.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="banner" id="banner" aria-live="polite">Нажми кнопку — щётка выберет!</div>
+
+  <div class="actions">
+    <button class="btn btn-main" id="draw" type="button">Разыграть</button>
+    <button class="btn btn-timer" id="timer-open" type="button" hidden>Таймер 2 минуты</button>
+  </div>
+
+  <section class="stats">
+    <div class="row">
+      <span class="label">Кто был первым</span>
+      <span class="score" id="score"></span>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="row">
+      <label class="fair">
+        <input type="checkbox" id="fair" checked>
+        <span class="switch"></span>
+        <span>Не больше 2 раз подряд</span>
+      </label>
+      <button class="reset" id="reset" type="button">Сбросить</button>
+    </div>
+  </section>
+</main>
+
+<section class="timer" id="timer" hidden>
+  <div class="who"><div class="avatar" id="t-avatar"></div><span id="t-name"></span></div>
+  <div class="ring">
+    <svg viewBox="0 0 240 240">
+      <circle cx="120" cy="120" r="104" fill="#FFFFFF" stroke="#D2EBE5" stroke-width="18"/>
+      <circle id="t-progress" cx="120" cy="120" r="104" fill="none" stroke="#17B091" stroke-width="18" stroke-linecap="round"/>
+    </svg>
+    <div class="clock" id="t-clock">2:00</div>
+  </div>
+  <div class="zones" id="t-zones"><span></span><span></span><span></span><span></span></div>
+  <div class="zone-text" id="t-zone"></div>
+  <div class="actions">
+    <button class="btn btn-timer" id="t-pause" type="button">Пауза</button>
+    <button class="btn btn-ghost" id="t-close" type="button">Закрыть</button>
+  </div>
+</section>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+
+  // ---------- Аватарки ----------
+  const EYES = (y) => `
+    <circle cx="49" cy="${y}" r="4" fill="#2B2440"/><circle cx="71" cy="${y}" r="4" fill="#2B2440"/>
+    <circle cx="50.4" cy="${y - 1.4}" r="1.4" fill="#fff"/><circle cx="72.4" cy="${y - 1.4}" r="1.4" fill="#fff"/>`;
+  const AVATARS = {
+    sofia: `<svg viewBox="0 0 120 120" role="img" aria-label="София">
+      <circle cx="60" cy="60" r="58" fill="#FFE1E8"/>
+      <circle cx="20" cy="70" r="15" fill="#7A4528"/><circle cx="100" cy="70" r="15" fill="#7A4528"/>
+      <path d="M14 52 l-10 -8 v16 z M26 52 l10 -8 v16 z" fill="#E9476F"/><circle cx="20" cy="52" r="4" fill="#C9345A"/>
+      <path d="M94 52 l-10 -8 v16 z M106 52 l10 -8 v16 z" fill="#E9476F"/><circle cx="100" cy="52" r="4" fill="#C9345A"/>
+      <circle cx="60" cy="58" r="38" fill="#7A4528"/>
+      <circle cx="60" cy="66" r="30" fill="#FFD9BE"/>
+      <path d="M29 62 Q31 28 60 27 Q89 28 91 62 Q84 44 70 42 Q66 50 56 47 Q46 45 44 42 Q33 48 29 62 Z" fill="#7A4528"/>
+      ${EYES(67)}
+      <ellipse cx="41" cy="77" rx="6" ry="4" fill="#FF8FA8" opacity=".6"/><ellipse cx="79" cy="77" rx="6" ry="4" fill="#FF8FA8" opacity=".6"/>
+      <path d="M51 80 Q60 89 69 80" stroke="#2B2440" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <rect x="56" y="82.5" width="8" height="4" rx="1" fill="#fff"/>
+    </svg>`,
+    daniil: `<svg viewBox="0 0 120 120" role="img" aria-label="Даниил">
+      <circle cx="60" cy="60" r="58" fill="#DCEEFF"/>
+      <circle cx="30" cy="68" r="7" fill="#F7C9A6"/><circle cx="90" cy="68" r="7" fill="#F7C9A6"/>
+      <circle cx="60" cy="66" r="30" fill="#FFD9BE"/>
+      <path d="M28 62 Q24 32 48 26 Q54 17 64 23 Q76 16 82 28 Q98 34 92 62 Q88 46 76 43 Q72 50 62 45 Q52 51 46 44 Q34 48 28 62 Z" fill="#B96A2C"/>
+      ${EYES(67)}
+      <g fill="#D99A6C"><circle cx="41" cy="75" r="1.3"/><circle cx="45" cy="78" r="1.3"/><circle cx="38" cy="78.5" r="1.3"/>
+      <circle cx="79" cy="75" r="1.3"/><circle cx="75" cy="78" r="1.3"/><circle cx="82" cy="78.5" r="1.3"/></g>
+      <path d="M49 80 Q60 92 71 80 Z" fill="#8C2F3E" stroke="#2B2440" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M52 81 H68 L67 84 H53 Z" fill="#fff"/>
+    </svg>`
+  };
+  const KIDS = {
+    sofia:  { name: "София",  gen: "Софии",  first: "Первой",  color: "#E9476F", initial: "С" },
+    daniil: { name: "Даниил", gen: "Даниила", first: "Первым", color: "#2A86E0", initial: "Д" }
+  };
+  const other = (id) => (id === "sofia" ? "daniil" : "sofia");
+  for (const id in KIDS) $(`#kid-${id} .avatar`).innerHTML = AVATARS[id];
+
+  // Щетинки
+  const bristles = $("#bristles");
+  let b = "";
+  for (let x = 241, i = 0; x <= 305; x += 6, i++) {
+    b += `<rect x="${x}" y="17" width="4" height="22" rx="2" fill="${i % 3 === 1 ? "#8FDDF7" : "#FFFFFF"}" stroke="#C4DCE4" stroke-width=".8"/>`;
+  }
+  bristles.innerHTML = b;
+
+  // ---------- Хранилище ----------
+  const KEY = "brush-lottery-v1";
+  let state = { counts: { sofia: 0, daniil: 0 }, history: [], fair: true, muted: false };
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (saved) state = Object.assign(state, saved);
+  } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+  // ---------- Звук ----------
+  let ac = null;
+  const audio = () => {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (ac && ac.state === "suspended") ac.resume();
+    return ac;
+  };
+  function tone(freq, dur, type = "triangle", vol = 0.15, when = 0, slideTo = 0) {
+    if (!ac || state.muted) return;
+    const t = ac.currentTime + when;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  const sfx = {
+    tick: () => tone(1100, 0.05, "square", 0.05),
+    squeeze: () => tone(260, 1.1, "sine", 0.12, 0, 110),
+    win: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.35, "triangle", 0.18, i * 0.11)),
+    zone: () => { tone(880, 0.18, "sine", 0.18); tone(1320, 0.25, "sine", 0.15, 0.16); },
+    done: () => [784, 988, 1175, 1568, 1175, 1568].forEach((f, i) => tone(f, 0.3, "triangle", 0.16, i * 0.12))
+  };
+  const soundBtn = $("#sound");
+  const SPEAKER_ON = `<svg viewBox="0 0 24 24" fill="none" stroke="#1E2B45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#1E2B45"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>`;
+  const SPEAKER_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="#1E2B45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#1E2B45"/><path d="M17 9l5 6M22 9l-5 6"/></svg>`;
+  const renderSound = () => {
+    soundBtn.innerHTML = state.muted ? SPEAKER_OFF : SPEAKER_ON;
+    soundBtn.setAttribute("aria-label", state.muted ? "Звук выключен" : "Звук включён");
+  };
+  soundBtn.addEventListener("click", () => { state.muted = !state.muted; audio(); renderSound(); save(); });
+
+  // ---------- Анимация ----------
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const brush = $("#brush"), tube = $("#tube"), tubeSvg = $("#tube svg");
+  const pastePaths = [...document.querySelectorAll("#paste path")];
+  const banner = $("#banner");
+  const cards = { sofia: $("#kid-sofia"), daniil: $("#kid-daniil") };
+  let angle = 0;
+
+  const setAngle = (a) => { angle = a; brush.style.transform = `rotate(${a}deg)`; };
+  const setPaste = (p) => pastePaths.forEach((el) => (el.style.strokeDashoffset = 100 - p * 100));
+  const easeOut = (t) => 1 - Math.pow(1 - t, 4);
+  const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+  const tween = (dur, ease, fn) => new Promise((res) => {
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / dur);
+      fn(ease(t));
+      t < 1 ? requestAnimationFrame(step) : res();
+    };
+    requestAnimationFrame(step);
+  });
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function resetBrush() {
+    const from = ((angle % 360) + 360) % 360;
+    if (from !== 0) {
+      const to = from > 180 ? 360 : 0;
+      await tween(reduced ? 150 : 550, easeInOut, (p) => setAngle(from + (to - from) * p));
+    }
+    setAngle(0);
+    setPaste(0);
+  }
+
+  async function squeeze() {
+    const k = reduced ? 0.3 : 1;
+    await tube.animate(
+      [{ transform: "translate(0, -120%) rotate(-10deg)", opacity: 0 },
+       { transform: "translate(0, 0) rotate(-10deg)", opacity: 1 }],
+      { duration: 450 * k, easing: "cubic-bezier(.2,.8,.3,1.25)", fill: "forwards" }).finished;
+    sfx.squeeze();
+    const squish = tubeSvg.animate(
+      [{ transform: "scale(1, 1)" }, { transform: "scale(.82, 1.04)" }, { transform: "scale(.9, 1)" }, { transform: "scale(.8, 1.05)" }],
+      { duration: 1300 * k, easing: "ease-in-out", fill: "forwards" });
+    const move = tube.animate(
+      [{ transform: "translate(0, 0) rotate(-10deg)", opacity: 1 },
+       { transform: "translate(-100%, 0) rotate(-14deg)", opacity: 1 }],
+      { duration: 1300 * k, easing: "linear", fill: "forwards" });
+    await Promise.all([tween(1300 * k, (t) => t, setPaste), move.finished]);
+    squish.cancel();
+    await tube.animate(
+      [{ transform: "translate(-100%, 0) rotate(-14deg)", opacity: 1 },
+       { transform: "translate(-60%, -130%) rotate(10deg)", opacity: 0 }],
+      { duration: 400 * k, easing: "ease-in", fill: "forwards" }).finished;
+  }
+
+  const sideOf = (a) => (Math.cos((a * Math.PI) / 180) < 0 ? "sofia" : "daniil");
+  function light(id) {
+    for (const k in cards) cards[k].classList.toggle("lit", k === id);
+  }
+
+  async function spin(winner) {
+    // 0° — головка щётки смотрит вправо (на Даниила), 180° — влево (на Софию).
+    // Карточки сверху, поэтому целимся по диагонали вверх: 225° (София) или 315° (Даниил).
+    const jitter = (rand() - 0.5) * 30;
+    const target = 360 * (reduced ? 2 : 6) + (winner === "sofia" ? 225 : 315) + jitter;
+    let side = sideOf(0);
+    light(side);
+    await tween(reduced ? 1200 : 4800, easeOut, (p) => {
+      setAngle(target * p);
+      const s = sideOf(angle);
+      if (s !== side) { side = s; light(s); sfx.tick(); }
+    });
+    light(null);
+  }
+
+  function bubbles() {
+    if (reduced) return;
+    for (let i = 0; i < 26; i++) {
+      const el = document.createElement("span");
+      el.className = "bubble";
+      const size = 10 + rand() * 38;
+      el.style.width = el.style.height = size + "px";
+      el.style.left = rand() * 100 + "vw";
+      el.style.setProperty("--d", 2.2 + rand() * 2.2 + "s");
+      el.style.setProperty("--dx", (rand() - 0.5) * 120 + "px");
+      el.style.setProperty("--dy", -(60 + rand() * 60) + "vh");
+      el.style.animationDelay = rand() * 0.6 + "s";
+      document.body.appendChild(el);
+      el.addEventListener("animationend", () => el.remove());
+    }
+  }
+
+  // ---------- Жеребьёвка ----------
+  function rand() {
+    const a = new Uint32Array(1);
+    crypto.getRandomValues(a);
+    return a[0] / 4294967296;
+  }
+  function pickWinner() {
+    const h = state.history;
+    if (state.fair && h.length >= 2 && h[0] === h[1]) return other(h[0]);
+    return rand() < 0.5 ? "sofia" : "daniil";
+  }
+
+  const drawBtn = $("#draw"), timerOpen = $("#timer-open");
+  let busy = false, lastWinner = null;
+
+  drawBtn.addEventListener("click", async () => {
+    if (busy) return;
+    busy = true;
+    audio();
+    drawBtn.disabled = true;
+    timerOpen.hidden = true;
+    for (const k in cards) cards[k].classList.remove("winner", "dim", "lit");
+    banner.textContent = "Выдавливаем пасту…";
+    await resetBrush();
+    await squeeze();
+    banner.textContent = "Крутим щётку…";
+    const w = pickWinner();
+    await spin(w);
+
+    cards[w].classList.add("winner");
+    cards[other(w)].classList.add("dim");
+    banner.innerHTML = `<span class="pop">${KIDS[w].first} идёт <b data-kid="${w}">${KIDS[w].name}</b>!</span>`;
+    sfx.win();
+    bubbles();
+
+    state.counts[w] = (state.counts[w] || 0) + 1;
+    state.history.unshift(w);
+    state.history = state.history.slice(0, 12);
+    save();
+    renderStats();
+
+    lastWinner = w;
+    timerOpen.textContent = `Таймер 2 минуты для ${KIDS[w].gen}`;
+    timerOpen.hidden = false;
+    drawBtn.textContent = "Разыграть ещё раз";
+    drawBtn.disabled = false;
+    busy = false;
+  });
+
+  // ---------- Счёт ----------
+  function renderStats() {
+    $("#score").innerHTML =
+      `<span class="s">София ${state.counts.sofia || 0}</span> : <span class="d">${state.counts.daniil || 0} Даниил</span>`;
+    const chips = $("#chips");
+    chips.innerHTML = state.history.length
+      ? state.history.map((id) => `<span class="chip ${id}" title="${KIDS[id].name}">${KIDS[id].initial}</span>`).join("")
+      : `<span class="empty">Здесь появятся результаты, новые слева</span>`;
+    $("#fair").checked = !!state.fair;
+  }
+  $("#fair").addEventListener("change", (e) => { state.fair = e.target.checked; save(); });
+
+  const resetBtn = $("#reset");
+  let resetArmed = null;
+  resetBtn.addEventListener("click", () => {
+    if (!resetArmed) {
+      resetBtn.textContent = "Точно сбросить?";
+      resetArmed = setTimeout(() => { resetBtn.textContent = "Сбросить"; resetArmed = null; }, 3000);
+      return;
+    }
+    clearTimeout(resetArmed); resetArmed = null;
+    resetBtn.textContent = "Сбросить";
+    state.counts = { sofia: 0, daniil: 0 };
+    state.history = [];
+    save(); renderStats();
+  });
+
+  // ---------- Таймер чистки ----------
+  const TOTAL = 120000, ZONE = 30000;
+  const ZONES = ["Верхние зубы слева", "Верхние зубы справа", "Нижние зубы слева", "Нижние зубы справа"];
+  const timerEl = $("#timer"), prog = $("#t-progress"), clock = $("#t-clock");
+  const zoneText = $("#t-zone"), zoneBars = [...document.querySelectorAll("#t-zones span")];
+  const pauseBtn = $("#t-pause"), closeBtn = $("#t-close");
+  const C = 2 * Math.PI * 104;
+  prog.style.strokeDasharray = C;
+  let t = { kid: null, elapsed: 0, last: 0, running: false, zone: -1, done: false };
+  let wakeLock = null;
+
+  async function lockScreen() {
+    try { wakeLock = await navigator.wakeLock?.request("screen"); } catch (e) { wakeLock = null; }
+  }
+  function unlockScreen() { try { wakeLock?.release(); } catch (e) {} wakeLock = null; }
+
+  function startTimer(kid) {
+    t = { kid, elapsed: 0, last: performance.now(), running: true, zone: -1, done: false };
+    $("#t-avatar").innerHTML = AVATARS[kid];
+    $("#t-name").textContent = KIDS[kid].name;
+    $("#t-name").style.color = KIDS[kid].color;
+    timerEl.style.setProperty("--kid", KIDS[kid].color);
+    prog.style.stroke = KIDS[kid].color;
+    pauseBtn.textContent = "Пауза";
+    closeBtn.textContent = "Закрыть";
+    timerEl.hidden = false;
+    lockScreen();
+    requestAnimationFrame(loop);
+  }
+  function renderTimer() {
+    const left = Math.max(0, TOTAL - t.elapsed);
+    const sec = Math.ceil(left / 1000);
+    clock.textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+    prog.style.strokeDashoffset = C * (t.elapsed / TOTAL);
+    const z = Math.min(3, Math.floor(t.elapsed / ZONE));
+    zoneBars.forEach((el, i) => { el.className = t.done || i < z ? "done" : i === z ? "now" : ""; });
+    if (!t.done && z !== t.zone) {
+      if (t.zone !== -1) sfx.zone();
+      t.zone = z;
+      zoneText.textContent = ZONES[z];
+    }
+  }
+  function loop(now) {
+    if (!t.running || timerEl.hidden) return;
+    t.elapsed += now - t.last;
+    t.last = now;
+    if (t.elapsed >= TOTAL) { t.elapsed = TOTAL; finish(); return; }
+    renderTimer();
+    requestAnimationFrame(loop);
+  }
+  function finish() {
+    t.running = false; t.done = true;
+    renderTimer();
+    sfx.done(); bubbles(); unlockScreen();
+    const next = other(t.kid);
+    zoneText.textContent = `Молодец, ${KIDS[t.kid].name}! Зубы чистые.`;
+    pauseBtn.textContent = `Теперь очередь ${KIDS[next].gen}`;
+  }
+  pauseBtn.addEventListener("click", () => {
+    audio();
+    if (t.done) { startTimer(other(t.kid)); return; }
+    t.running = !t.running;
+    pauseBtn.textContent = t.running ? "Пауза" : "Продолжить";
+    if (t.running) { t.last = performance.now(); requestAnimationFrame(loop); }
+  });
+  closeBtn.addEventListener("click", () => { t.running = false; timerEl.hidden = true; unlockScreen(); });
+  timerOpen.addEventListener("click", () => { audio(); if (lastWinner) startTimer(lastWinner); });
+
+  // ---------- Старт ----------
+  setAngle(0);
+  setPaste(1);
+  renderSound();
+  renderStats();
+
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
